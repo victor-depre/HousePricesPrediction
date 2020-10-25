@@ -39,7 +39,7 @@ We can see that train.df contains 82 variables.
 str(test.df)
 ```
 
-test.df contains only 81 variables, one less than train.df, we see that it is the variable SalePrice that is missing.
+test.df contains only 81 variables, one less than train.df, it is the variable SalePrice that is missing.
 
 ```{r}
 test.df$SalePrice <- NA
@@ -76,7 +76,8 @@ na_count
 Nous pouvons voir que les variables qui comptent le plus de valeurs manquantes sont Alley, PoolQc, MiscFeature, Fence, FirePlaceQu. Il y a 29 variables qui contiennent des valeurs nulles mais dans une moindre mesure. Il sera donc plus simple de les prédire. Enfin, la variable SalePrice contient 1459 valeurs manquantes soit le nombre de lignes du jeu de données test.
 
 ```{r}
-gg_miss_var(full.df)
+Graph1 <- gg_miss_var(full.df)
+ggplotly(Graph1)
 ```
 
 Une autre manière de visualiser les valeurs manquantes de façon hiérarchique. Sur ce graphique, nous distinguons clairement 6 variables pour lesquelles nous avons plus de 1000 valeurs nulles.
@@ -90,28 +91,28 @@ Analyse des variables qui contiennent le plus de NA:
 + FireplaceQu, la valeur NA indique l'absence de cheminée.
 + LotFrontage, ici, il va falloir déterminer si NA indique l'absence de distance entre la propriété et la rue ou alors si la valeur NA indique simplement une valeur non renseignée.
 
-Pour éviter de fausser l'analyse de données, nous allons remplacer les valeurs NA des cinq premières variables par "No".
+Pour éviter de fausser l'analyse de données, nous allons remplacer les valeurs NA des cinq premières variables par "Abs".
 Concernant la variable LotFrontage, nous allons devoir déterminer si NA indique une distance de 0 ou s'il s'agit de valeurs non renseignées.
 
 ### NA indiquant "non"
 
 ```{r}
-full.df$PoolQC[is.na(full.df$PoolQC)] = "No"
-full.df$MiscFeature[is.na(full.df$MiscFeature)] = "No"
-full.df$Alley[is.na(full.df$Alley)] = "No"
-full.df$Fence[is.na(full.df$Fence)] = "No"
-full.df$FireplaceQu[is.na(full.df$FireplaceQu)] = "No"
+full.df$PoolQC[is.na(full.df$PoolQC)] = "Abs"
+full.df$MiscFeature[is.na(full.df$MiscFeature)] = "Abs"
+full.df$Alley[is.na(full.df$Alley)] = "Abs"
+full.df$Fence[is.na(full.df$Fence)] = "Abs"
+full.df$FireplaceQu[is.na(full.df$FireplaceQu)] = "Abs"
 ```
 
-Les valeurs indiquées comme NA pour les précédentes variables ont donc été remplacées par la valeur "No", cela permettra de passer ces variables en facteur au moment voulu.
+Les valeurs indiquées comme NA pour les précédentes variables ont donc été remplacées par la valeur "Abs", cela permettra de passer ces variables en facteur au moment voulu.
 
 ### Vérification pour la variable PoolQC
 
 ```{r}
-full.df[full.df$PoolArea>0 & full.df$PoolQC=="No", c("Id", 'PoolArea', 'PoolQC', 'OverallQual')]
+full.df[full.df$PoolArea>0 & full.df$PoolQC=="Abs", c("Id", 'PoolArea', 'PoolQC', 'OverallQual')]
 ```
 
-Nous constatons qu'il y a 3 valeurs "No" pour la variable PoolQC alors que la variable PoolArea indique une taille de piscine (donc la présence d'une piscine sur la propriété). Il s'agit donc d'une erreur de saisie ou d'une omission pour la variable PoolQC sur les lignes.
+Nous constatons qu'il y a 3 valeurs "Abs" pour la variable PoolQC alors que la variable PoolArea indique une taille de piscine (donc la présence d'une piscine sur la propriété). Il s'agit donc d'une erreur de saisie ou d'une omission pour la variable PoolQC sur les lignes.
 Pour remplacer les valeurs manquantes de PoolQC, nous nous baserons sur la qualité globale de la maison (en divisant par 2).
 
 ```{r}
@@ -125,10 +126,10 @@ Les valeurs ont été remplacées en prenant en compte la qualité globale de l'
 ### Vérification pour la variable FirePlaceQu
 
 ```{r}
-full.df[full.df$Fireplaces>0 & full.df$FireplaceQu=="No", c("Id", 'Fireplaces', 'FireplaceQu')]
+full.df[full.df$Fireplaces>0 & full.df$FireplaceQu=="Abs", c("Id", 'Fireplaces', 'FireplaceQu')]
 ```
 
-Il n'y a aucune erreur sur la variable FirePlaceQu, car lorsque la valeur indique "No", il y a effectivement aucune cheminée au sein de l'habitation.
+Il n'y a aucune erreur sur la variable FirePlaceQu, car lorsque la valeur indique "Abs", il y a effectivement aucune cheminée au sein de l'habitation.
 
 ### Valeurs manquantes Lot Frontage
 
@@ -149,9 +150,10 @@ Nous constatons que les valeurs manquantes pour LotFrontage semblent être distr
 En étudiant les autres variables du jeu de données, nous nous apercevons qu'aucune autre ne semble pouvoir expliquer les absences de valeurs pour la variable LotFrontage. Nous allons donc devoir trouver une méthode pour prédire les valeurs de cette dernière.
 
 ```{r}
-ggplot(full.df[!is.na(full.df$LotFrontage),], aes(x=as.factor(Neighborhood), y=LotFrontage)) +
+Graph2 <- ggplot(full.df[!is.na(full.df$LotFrontage),], aes(x=as.factor(Neighborhood), y=LotFrontage)) +
         geom_bar(stat='summary', fun.y = "median", fill='red') +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplotly(Graph2)
 ```
 
 Nous voyons que les valeurs pour LotFrontage divergent en fonction du lieu. Nous allons donc affecter les valeurs médianes aux valeurs manquantes pour cette variable.
@@ -165,9 +167,26 @@ full.df <- full.df[order(full.df$Id),]
 ```
 
 
+### Valeurs manquantes Basement (Bsmt)
 
- 
+Il n'y a aucune erreur sur les variable Bsmt, car lorsque la valeur indique "Na", il y a pas de sous-sol dans l'habitation.
 
+```{r}
+full.df$BsmtQual[is.na(full.df$BsmtQual)] = "Abs"
+full.df$BsmtCond[is.na(full.df$BsmtCond)] = "Abs"
+full.df$BsmtExposure[is.na(full.df$BsmtExposure)] = "Abs"
+full.df$BsmtFinType1[is.na(full.df$BsmtFinType1)] = "Abs"
+full.df$BsmtFinType2[is.na(full.df$BsmtFinType2)] = "Abs"
+```
+
+### Valeurs manquantes MasVnrArea
+
+```{r}
+summary(full.df$MasVnrArea)
+full.df$MasVnrArea <- as.numeric(full.df$MasVnrArea)
+dt_test0 <- full.df %>% filter(MasVnrArea==0)
+str(full.df$MasVnrArea)
+```
 
 
 
