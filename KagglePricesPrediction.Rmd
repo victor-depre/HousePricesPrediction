@@ -88,7 +88,7 @@ Analyse des variables qui contiennent le plus de NA:
 + MiscFeature, là encore, la valeur NA indique l'absence de caractéristiques supplémentaires.
 + Alley, la valeur NA indique l'absence d'allée.
 + Fence, la valeur NA indique l'absence de clôtures.
-+ FireplaceQu, la valeur NA indique l'absence de cheminée.
++ FireplaceQu, la valeur NA indique l'absence de cheminée. 
 + LotFrontage, ici, il va falloir déterminer si NA indique l'absence de distance entre la propriété et la rue ou alors si la valeur NA indique simplement une valeur non renseignée.
 
 Pour éviter de fausser l'analyse de données, nous allons remplacer les valeurs NA des cinq premières variables par "Abs".
@@ -113,7 +113,7 @@ full.df[full.df$PoolArea>0 & full.df$PoolQC=="Abs", c("Id", 'PoolArea', 'PoolQC'
 ```
 
 Nous constatons qu'il y a 3 valeurs "Abs" pour la variable PoolQC alors que la variable PoolArea indique une taille de piscine (donc la présence d'une piscine sur la propriété). Il s'agit donc d'une erreur de saisie ou d'une omission pour la variable PoolQC sur les lignes.
-Pour remplacer les valeurs manquantes de PoolQC, nous nous baserons sur la qualité globale de la maison (en divisant par 2).
+Pour remplacer les valeurs manquantes de PoolQC, nous nous baserons sur la qualité globale de la maison (OverallQual).
 
 ```{r}
 full.df$PoolQC[2421] <- "Fa"
@@ -137,13 +137,13 @@ Il n'y a aucune erreur sur la variable FirePlaceQu, car lorsque la valeur indiqu
 summary(full.df$LotFrontage)
 ```
 
-Cette première analyse nous permet de constater que pour la variable LotFrontage, la valeur minimum est 21. Nous ne pouvons donc pas conclure que les valeurs NA représentent la valeur 0. 
+Cette première analyse nous permet de constater que pour la variable LotFrontage, la valeur minimale est 21. Nous ne pouvons donc pas conclure que les valeurs NA représentent la valeur 0. 
 
 ```{r}
 table(is.na(full.df$LotFrontage), full.df$MSZoning)
 ```
 
-Dans un premier temps, nous essayons de voir s'il existe un lien entre la variable MsZoning et la variable LotFrontage. Nous décidons de faire cette analyse car il pourrait y avoir un lien par exemple entre le fait d'être en zone agricole et ainsi ne pas avoir de surface du lot bordant la rue. 
+Dans un premier temps, nous essayons de voir s'il existe un lien entre la variable MsZoning et la variable LotFrontage. Nous décidons de faire cette analyse car il pourrait y avoir un lien par exemple entre le fait d'être en zone agricole et ainsi ne pas avoir de surface du lot bordant la rue.
 
 Nous constatons que les valeurs manquantes pour LotFrontage semblent être distribuées de façon identique aux valeurs non-nulles de la variable. Il n'y a donc à priori aucun lien entre ces deux variables.
 
@@ -179,15 +179,56 @@ full.df$BsmtFinType1[is.na(full.df$BsmtFinType1)] = "Abs"
 full.df$BsmtFinType2[is.na(full.df$BsmtFinType2)] = "Abs"
 ```
 
-### Valeurs manquantes MasVnrArea
+### Valeurs manquantes MasVnrArea/MasVnrType
 
 ```{r}
 summary(full.df$MasVnrArea)
-full.df$MasVnrArea <- as.numeric(full.df$MasVnrArea)
-dt_test0 <- full.df %>% filter(MasVnrArea==0)
-str(full.df$MasVnrArea)
 ```
 
+La moyenne de la variable MasVnrArea (qui indique la surface de placage sur les façades) est de 102.2m² alors que la médiane est de 0, donc au moins la moitiée des valeurs pour cette variable sont nulles, vérifions s'il s'agit d'une erreur.
+
+```{r}
+full.df$MasVnrArea <- as.numeric(full.df$MasVnrArea)
+dt_test0 <- full.df %>% filter(MasVnrArea==0)
+dt_test0
+```
+
+Après avoir filtré la base de données pour ne garder que les habitations qui ont une valeur MasVnrArea égale à zéro, on remarque qu'il y a une corrélation entre les variables MasVnrArea et MasVnrType (qui indique le type de placage) : pour toutes les habitations qui ont une valeur MasVnrArea nulle, la variable MasVnrType indique "None". Donc il ne s'aggit pas d'une erreur puisque les valeurs nulles correspondent aux habitations dont les façades ne possèdent pas de placage).
+
+On remplace les valeurs NA par "None" pour MasVnrType et par 0 pour MasVnrArea.  
+
+```{r}
+full.df$MasVnrType[is.na(full.df$MasVnrType)] = "None"
+full.df$MasVnrArea[is.na(full.df$MasVnrArea)] = 0
+```
+
+En revanche, étant donné qu'il y a 24 valeurs manquantes pour le type de matériau et seulement 23 pour la surface couverte çela veut dire qu'il y a eu une erreur de saisie ou un oubli pour le matériau d'une habitation (car la surface est bien présente). 
+
+Vérifions quels sont les matériaux les plus utilisées pour le placage
+
+```{r}
+Graph3 <- ggplot(full.df) +
+ aes(x = MasVnrType) +
+ geom_bar(fill = "#0c4c8a") +
+ theme_minimal()
+ggplotly(Graph3)
+```
+
+Ce graphique nous montre qu'au total il y a 1153 (879 + 25 + 249) habitations qui ont un placage. Le matériau le plus utilisé est clairement la brique qui représente 76% (879/1153) des placages. On peut donc affirmer avec une certitude de 76% que la valeur manquante est BrkFace, ce qui est un risque acceptable.
+
+```{r}
+full.df[2611, 26] = "BrkFace"
+full.df
+```
+
+
+```{r}
+Graph10 <- gg_miss_var(full.df)
+ggplotly(Graph10)
+```
+
+
+### Valeurs manquantes
 
 
 
