@@ -228,10 +228,62 @@ ggplotly(Graph10)
 ```
 
 
-### Valeurs manquantes
+### Valeur manquantes Garages
+
+Regarder maintenant pour les valeurs manquantes concernant les garages
+
+Pour GarageType, la valeur NA indique l'absence de garage. Il faut donc regarder pour les autres variables garages si l'absence d'informations provient de l'absence d'un garage.
+
+Nombre de valeurs manquantes pour les variables rattachées au Garage :
+
+GarageType	157			
+GarageYrBlt	159			
+GarageFinish	159			
+GarageCars	1			
+GarageArea	1			
+GarageQual	159			
+GarageCond	159
+
+Dans un premier temps, nous indiquons "Abs" lorsque la valeur NA est présente sur la variable GarageType.
+
+```{r}
+full.df$GarageType[is.na(full.df$GarageType)] = "Abs"
+```
 
 
+Ensuite nous créons un jeu de données avec l'ensemble des variables Garage (voir si c'est pertinent)
+
+```{r}
+full.df[full.df$GarageType=="Abs", c("GarageYrBlt", 'GarageQual', 'GarageCond', 'GarageFinish')]
+```
 
 
+Nous pouvons voir que parmi toutes les valeurs Abs pour la variable GarageType, les variables GarageYrBlt, GarageQual, GarageCond et GarageFinish affichent une valeur "NA". Ainsi, nous allons pouvoir remplacer ces NA par la valeur Abs.
 
+```{r}
+full.df$GarageYrBlt[is.na(full.df$GarageYrBlt)] = "Abs"
+full.df$GarageQual[is.na(full.df$GarageQual)] = "Abs"
+full.df$GarageCond[is.na(full.df$GarageCond)] = "Abs"
+full.df$GarageFinish[is.na(full.df$GarageFinish)] = "Abs"
+```
 
+Les variables GarageCars et GarageArea comptent chacune une valeur NA, nous allons vérifier si cette valeur NA correspond à l'absence de garage ou s'il s'agit d'une erreur de saisie lors de la création du jeu de données.
+
+```{r}
+which(is.na(full.df$GarageCars), arr.ind=TRUE)
+which(is.na(full.df$GarageArea), arr.ind=TRUE)
+```
+
+Nous pouvons voir que les 2 valeurs manquantes pour les 2 variables se trouvent sur la même ligne, la ligne 2577.
+
+```{r}
+full.df[2577]
+```
+
+Sur la ligne 2577, toutes les variables relatives au Garage indiquent l'absence d'un garage excepté pour la variable GarageType qui indique "Detchd", nous pouvons donc conclure qu'il s'agit d'une erreur de saisie et que cette valeur devrait être "Abs" au lieu de "Detchd".
+
+```{r}
+full.df$GarageType[2577] <- "Abs"
+full.df$GarageCars[is.na(full.df$GarageCars)] = "Abs"
+full.df$GarageArea[is.na(full.df$GarageArea)] = "Abs"
+```
