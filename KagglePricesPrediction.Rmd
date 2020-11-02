@@ -16,7 +16,8 @@ library(plotly) # same
 library(readr) # download the data
 library(caret) # to perform RF model
 library(naniar) # to visualize missing data
-library(data.table) # to ?????????
+library(data.table)
+library(corrr)
 ```
 
 # Download the data
@@ -57,7 +58,7 @@ We merge the two datasets to perform analysis on the full data.
 head(full.df, 10)
 ```
 
-Nous regardons les dix premières lignes de notre jeu de données, nous pouvons constater que certaines variables comportent des valeurs manquantes. Nous allons donc étudier quelles sont les valeurs manquantes puis essayer de définir une méthode pour les prédire.
+Nous regardons les dix premières lignes de notre jeu de données, nous pouvons constater que certaines variables comportent des valeurs manquantes. Nous allons donc étudier quelles sont les valeurs manquantes puis essayer de définir une méthode pour leur donner une approximation.
 
 # Gérer les valeurs manquantes
 
@@ -166,19 +167,6 @@ full.df[,LotFrontage := ifelse(is.na(LotFrontage), median(LotFrontage, na.rm=TRU
 full.df <- full.df[order(full.df$Id),]
 ```
 
-
-### Valeurs manquantes Basement (Bsmt)
-
-Il n'y a aucune erreur sur les variable Bsmt, car lorsque la valeur indique "Na", il y a pas de sous-sol dans l'habitation.
-
-```{r}
-full.df$BsmtQual[is.na(full.df$BsmtQual)] = "Abs"
-full.df$BsmtCond[is.na(full.df$BsmtCond)] = "Abs"
-full.df$BsmtExposure[is.na(full.df$BsmtExposure)] = "Abs"
-full.df$BsmtFinType1[is.na(full.df$BsmtFinType1)] = "Abs"
-full.df$BsmtFinType2[is.na(full.df$BsmtFinType2)] = "Abs"
-```
-
 ### Valeurs manquantes MasVnrArea/MasVnrType
 
 ```{r}
@@ -189,7 +177,7 @@ La moyenne de la variable MasVnrArea (qui indique la surface de placage sur les 
 
 ```{r}
 full.df$MasVnrArea <- as.numeric(full.df$MasVnrArea)
-table(full.df$MasVnrArea==0, full.df$MasVnrType)
+table(full.df$MasVnrArea,==0, full.df$MasVnrType)
 ```
 
 Après avoir filtré la base de données pour ne garder que les habitations qui ont une valeur MasVnrArea égale à zéro, on remarque qu'il y a une corrélation entre les variables MasVnrArea et MasVnrType (qui indique le type de placage) : pour toutes les habitations qui ont une valeur MasVnrArea nulle, la variable MasVnrType indique "None". Donc il ne s'agit pas d'une erreur puisque les valeurs nulles correspondent aux habitations dont les façades ne possèdent pas de placage). Néanmoins, il y a 3 valeurs pour lesquelles MasVnrArea indique 0 alors que MasVnrType indique BrkFace ou Stone. Nous allons donc chercher ces 3 valeurs dans un premier temps. Il existe également 7 habitations ne possédant pas une valeur nulle pour MasVnrArea alors que le MasVnrType est None.
