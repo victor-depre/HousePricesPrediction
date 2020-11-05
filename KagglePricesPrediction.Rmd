@@ -567,3 +567,36 @@ Nous avons maintenant terminé avec l'ensemble des variables Bsmt.
 
 
 
+### Variable MSZoning
+
+```{r}
+which_na(full.df$MSZoning)
+```
+
+Nous avons 4 valeurs manquantes pour MSZoning. Nous allons tenter de comparer avec une ou plusieurs autres variables pour voir s'il existe une corrélation afin de pouvoir prédire les valeurs manquantes.
+
+```{r}
+table(full.df$MSZoning, full.df$Neighborhood, useNA = "always")
+```
+
+En comparant les variables MSZoning et Neighborhood, nous nous apercevons que 3 valeurs manquantes pour la variable MSZoning affichent la valeur IDOTRR pour Neighborhood et une valeur manquante affiche Mitchel.
+Grace à ces informations, nous allons pouvoir remplacer les valeurs manquantes. Pour la commune de IDOTTR, la valeur sera RM et pour Mitchel la valeur sera RL.
+
+```{r}
+full.df$Neighborhood[1916]
+full.df$Neighborhood[2217]
+full.df$Neighborhood[2251]
+full.df$Neighborhood[2905]
+full.df$MSZoning[1916] <- "RM"
+full.df$MSZoning[2217] <- "RM"
+full.df$MSZoning[2251] <- "RM"
+full.df$MSZoning[2905] <- "RL"
+```
+
+
+
+
+
+
+
+
